@@ -118,6 +118,13 @@ namespace Mesen.Debugger
 			SetBreakpoints();
 		}
 
+		public static void RemoveTemporaryBreakpoint(Breakpoint bp)
+		{
+			if(_temporaryBreakpoints.Remove(bp)) {
+				SetBreakpoints();
+			}
+		}
+
 		public static void ClearTemporaryBreakpoints()
 		{
 			if(_temporaryBreakpoints.Count > 0) {

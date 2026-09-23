@@ -11,6 +11,7 @@ namespace Mesen.Mcp
 			McpStatusTools.Register(registry);
 			McpStateTools.Register(registry);
 			McpAnalysisTools.Register(registry);
+			McpExecutionTools.Register(registry);
 			return registry;
 		}
 	}
