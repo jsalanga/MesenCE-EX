@@ -424,8 +424,9 @@ namespace Mesen.Mcp.Tools
 					["code_percent"] = Math.Round(stats.CodeBytes * 100 / total, 2),
 					["data_percent"] = Math.Round(stats.DataBytes * 100 / total, 2),
 					["unknown_percent"] = Math.Round((total - stats.CodeBytes - stats.DataBytes) * 100 / total, 2),
-					["functions"] = stats.FunctionCount,
-					["jump_targets"] = stats.JumpTargetCount
+					//The core doesn't fill in FunctionCount/JumpTargetCount, compute them here
+					["functions"] = DebugApi.GetCdlFunctions(memType).Length,
+					["jump_targets"] = CountJumpTargets(memType)
 				};
 				if(stats.TotalChrBytes > 0) {
 					region["chr_drawn_bytes"] = stats.DrawnChrBytes;
@@ -439,6 +440,17 @@ namespace Mesen.Mcp.Tools
 				["regions"] = regions,
 				["note"] = "CDL data accumulates while the game runs with the debugger attached, and is saved automatically by Mesen."
 			});
+		}
+
+		private static int CountJumpTargets(MemoryType memType)
+		{
+			int count = 0;
+			foreach(CdlFlags flags in DebugApi.GetCdlData(0, (UInt32)DebugApi.GetMemorySize(memType), memType)) {
+				if(flags.HasFlag(CdlFlags.Code) && flags.HasFlag(CdlFlags.JumpTarget)) {
+					count++;
+				}
+			}
+			return count;
 		}
 
 		private static Task<JsonObject> ListFunctions(McpArgs args, CancellationToken ct)
