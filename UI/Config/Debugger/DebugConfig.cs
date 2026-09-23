@@ -1,5 +1,6 @@
 ﻿using Mesen.Debugger;
 using Mesen.Interop;
+using Mesen.Mcp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -105,6 +106,8 @@ namespace Mesen.Config
 				ScriptAllowNetworkAccess = ScriptWindow.AllowNetworkAccess,
 				ScriptTimeout = ScriptWindow.ScriptTimeout
 			});
+
+			McpServer.Instance.ApplyConfig();
 		}
 	}
 

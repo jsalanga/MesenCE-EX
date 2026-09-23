@@ -13,6 +13,7 @@ using Mesen.Debugger.Utilities;
 using Mesen.Debugger.Windows;
 using Mesen.Interop;
 using Mesen.Localization;
+using Mesen.Mcp;
 using Mesen.Utilities;
 using Mesen.ViewModels;
 using Mesen.Views;
@@ -181,6 +182,7 @@ namespace Mesen.Windows
 			}
 
 			_timerBackgroundFlag.Stop();
+			McpServer.Instance.Stop();
 			EmuApi.Stop();
 			_listener?.Dispose();
 			EmuApi.Release();
