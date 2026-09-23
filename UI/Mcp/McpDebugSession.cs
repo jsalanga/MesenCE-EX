@@ -154,6 +154,24 @@ namespace Mesen.Mcp
 			}
 		}
 
+		private Timer? _saveTimer;
+
+		/// <summary>
+		/// Saves the debugger workspace (labels, breakpoints) a few seconds after the last change made through MCP.
+		/// (The UI's AutoSave is throttled to once per minute, which could lose a lot of an agent's work on a crash.)
+		/// </summary>
+		public void ScheduleWorkspaceSave()
+		{
+			lock(_lock) {
+				_saveTimer?.Dispose();
+				_saveTimer = new Timer(_ => Dispatcher.UIThread.Post(() => {
+					if(_sessionAcquired) {
+						DebugWorkspaceManager.Save();
+					}
+				}), null, 2000, Timeout.Infinite);
+			}
+		}
+
 		/// <summary>Arms a waiter that completes on the next break (breakpoint, step, pause), or when the ROM is unloaded</summary>
 		public Task<McpStopEvent> ArmStopWaiter(long frameLimit = long.MaxValue)
 		{
