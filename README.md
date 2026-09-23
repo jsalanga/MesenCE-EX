@@ -1,5 +1,8 @@
 # Mesen Community Edition
 
+> **About this fork:** this fork adds small enhancements to MesenCE for AI-friendly development, such as a built-in
+> [MCP server](docs/MCP.md) that lets AI agents use the debugger. It is intended for educational purposes.
+
 Mesen is a multi-system emulator for Windows, Linux, and macOS. It supports NES, SNES, Game Boy (GB/SGB/GBC), Game Boy Advance, PC Engine, SMS/Game Gear, and WonderSwan (WS/WSC).
 
 This is a community-managed fork, created to maintain and expand this emulator into the future.
