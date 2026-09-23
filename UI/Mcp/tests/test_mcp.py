@@ -82,10 +82,13 @@ class Runner:
     async def call(self, name: str, **arguments) -> dict:
         result = await self.session.call_tool(name, arguments)
         text = "".join(c.text for c in result.content if getattr(c, "type", "") == "text")
-        if result.isError:
+        # SDK 2.x uses snake_case field names, 1.x uses camelCase
+        is_error = getattr(result, "is_error", None) if hasattr(result, "is_error") else getattr(result, "isError", False)
+        structured = getattr(result, "structured_content", None) if hasattr(result, "structured_content") else getattr(result, "structuredContent", None)
+        if is_error:
             raise RuntimeError(f"{name} failed: {text}")
-        if result.structuredContent is not None:
-            return result.structuredContent
+        if structured is not None:
+            return structured
         return json.loads(text)
 
     def check(self, condition: bool, description: str, detail: object = "") -> bool:
