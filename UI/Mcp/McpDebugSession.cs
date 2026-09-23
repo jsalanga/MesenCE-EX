@@ -154,6 +154,47 @@ namespace Mesen.Mcp
 			}
 		}
 
+		private volatile bool _pauseOnReset;
+		private List<(HashSet<ConsoleNotificationType> types, TaskCompletionSource<ConsoleNotificationType> tcs)> _notificationWaiters = new();
+
+		/// <summary>
+		/// Pauses execution when the next reset/power cycle/ROM load completes, so that execution stops on the first instruction
+		/// (same as the debugger window's "Break on power cycle/reset" option)
+		/// </summary>
+		public void PauseOnNextReset(bool enabled)
+		{
+			_pauseOnReset = enabled;
+		}
+
+		/// <summary>Returns a task that completes when one of the given notifications is received</summary>
+		public Task<ConsoleNotificationType> ArmNotificationWaiter(params ConsoleNotificationType[] types)
+		{
+			TaskCompletionSource<ConsoleNotificationType> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+			lock(_notificationWaiters) {
+				_notificationWaiters.Add((new HashSet<ConsoleNotificationType>(types), tcs));
+			}
+			return tcs.Task;
+		}
+
+		public void DisarmNotificationWaiter(Task<ConsoleNotificationType> task)
+		{
+			lock(_notificationWaiters) {
+				_notificationWaiters.RemoveAll(w => w.tcs.Task == task);
+			}
+		}
+
+		private void ProcessNotificationWaiters(ConsoleNotificationType type)
+		{
+			lock(_notificationWaiters) {
+				for(int i = _notificationWaiters.Count - 1; i >= 0; i--) {
+					if(_notificationWaiters[i].types.Contains(type)) {
+						_notificationWaiters[i].tcs.TrySetResult(type);
+						_notificationWaiters.RemoveAt(i);
+					}
+				}
+			}
+		}
+
 		private Timer? _saveTimer;
 
 		/// <summary>
@@ -222,11 +263,29 @@ namespace Mesen.Mcp
 					CompleteStopWaiter(new McpStopEvent(McpStopReason.RomUnloaded));
 					break;
 
+				case ConsoleNotificationType.GameReset:
+					if(_pauseOnReset) {
+						_pauseOnReset = false;
+						EmuApi.Pause();
+					}
+					break;
+
 				case ConsoleNotificationType.GameLoaded:
 				case ConsoleNotificationType.GameLoadFailed:
 					_loading = false;
 					_lastBreakTime = null;
 					if(e.NotificationType == ConsoleNotificationType.GameLoaded) {
+						GameLoadedEventParams evtParams = Marshal.PtrToStructure<GameLoadedEventParams>(e.Parameter);
+						if(_pauseOnReset) {
+							_pauseOnReset = false;
+							if(!evtParams.IsPaused) {
+								//The debugger must be running for the pause to happen on the first instruction
+								//(it's already running if a ROM was loaded with the debugger attached before)
+								DebugApi.InitializeDebugger();
+								EmuApi.Pause();
+							}
+						}
+
 						//New ROM may have a different set of CPUs
 						Dispatcher.UIThread.Post(() => {
 							if(_sessionAcquired) {
@@ -240,6 +299,10 @@ namespace Mesen.Mcp
 					_loading = false;
 					_lastBreakTime = null;
 					break;
+			}
+
+			if(e.NotificationType != ConsoleNotificationType.PpuFrameDone) {
+				ProcessNotificationWaiters(e.NotificationType);
 			}
 		}
 	}

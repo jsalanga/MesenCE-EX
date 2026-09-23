@@ -14,6 +14,7 @@ namespace Mesen.Mcp
 			McpExecutionTools.Register(registry);
 			McpLabelTools.Register(registry);
 			McpBreakpointTools.Register(registry);
+			McpWriteTools.Register(registry);
 			return registry;
 		}
 	}
