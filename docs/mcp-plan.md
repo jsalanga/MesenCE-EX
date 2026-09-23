@@ -1,6 +1,6 @@
 # MesenCE MCP server: investigation and plan
 
-Status: **approved; implementation in progress** on branch `feature/mcp-server`.
+Status: **implemented** on branch `feature/mcp-server` (see `docs/MCP.md` for the user documentation).
 
 > **Change during implementation (transport):** the server uses a small HTTP/1.1 handler on
 > `TcpListener` bound to `127.0.0.1` and `::1` instead of `HttpListener`. On Windows `HttpListener`
