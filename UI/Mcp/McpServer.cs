@@ -124,6 +124,7 @@ namespace Mesen.Mcp
 				Task.Run(() => AcceptLoop(l, ct));
 			}
 
+			McpDebugSession.Instance.Start();
 			State = McpServerState.Listening;
 			EmuApi.WriteLogEntry("[MCP] Server listening on " + Url);
 		}
@@ -143,6 +144,7 @@ namespace Mesen.Mcp
 			_listeners.Clear();
 
 			if(State == McpServerState.Listening) {
+				McpDebugSession.Instance.Stop();
 				EmuApi.WriteLogEntry("[MCP] Server stopped");
 			}
 			State = McpServerState.Stopped;

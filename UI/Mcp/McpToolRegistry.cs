@@ -35,8 +35,8 @@ namespace Mesen.Mcp
 				throw new McpToolException($"'{tool.Name}' modifies emulator state and is disabled. Ask the user to enable 'Allow write access' for the MCP server in Mesen (Debug > Debugger settings > Integration tab).");
 			}
 
-			if(tool.RequiresRom && !EmuApi.IsRunning()) {
-				throw new McpToolException("No ROM is loaded. Load a ROM in Mesen first (or use load_rom if write access is enabled).");
+			if(tool.RequiresRom) {
+				await McpDebugSession.Instance.EnsureReadyAsync();
 			}
 
 			return await tool.Handler(args, ct);

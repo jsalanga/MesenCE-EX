@@ -13,7 +13,8 @@ namespace Mesen.Debugger
 
 		private static List<Breakpoint> _breakpoints = new List<Breakpoint>();
 		private static List<Breakpoint> _temporaryBreakpoints = new List<Breakpoint>();
-		private static HashSet<CpuType> _activeCpuTypes = new HashSet<CpuType>();
+		//Reference counted: several debugger windows (and the MCP server) can be active for the same CPU
+		private static Dictionary<CpuType, int> _activeCpuTypes = new Dictionary<CpuType, int>();
 
 		public static ReadOnlyCollection<Breakpoint> Breakpoints
 		{
@@ -35,13 +36,19 @@ namespace Mesen.Debugger
 
 		public static void AddCpuType(CpuType cpuType)
 		{
-			_activeCpuTypes.Add(cpuType);
+			_activeCpuTypes[cpuType] = _activeCpuTypes.GetValueOrDefault(cpuType) + 1;
 			SetBreakpoints();
 		}
 
 		public static void RemoveCpuType(CpuType cpuType)
 		{
-			_activeCpuTypes.Remove(cpuType);
+			if(_activeCpuTypes.TryGetValue(cpuType, out int count)) {
+				if(count <= 1) {
+					_activeCpuTypes.Remove(cpuType);
+				} else {
+					_activeCpuTypes[cpuType] = count - 1;
+				}
+			}
 			SetBreakpoints();
 		}
 
@@ -236,7 +243,7 @@ namespace Mesen.Debugger
 			void toInteropBreakpoints(IEnumerable<Breakpoint> bpList)
 			{
 				foreach(Breakpoint bp in bpList) {
-					if(_activeCpuTypes.Contains(bp.CpuType)) {
+					if(_activeCpuTypes.ContainsKey(bp.CpuType)) {
 						breakpoints.Add(bp.ToInteropBreakpoint(id));
 					}
 					id++;
