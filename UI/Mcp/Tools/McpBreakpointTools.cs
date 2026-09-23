@@ -33,8 +33,10 @@ namespace Mesen.Mcp.Tools
 				"add_breakpoint",
 				"Adds a breakpoint, exactly like the debugger's breakpoint editor; it is saved in Mesen's workspace and shown in the debugger. " +
 				"Execution stops when the CPU executes (exec), reads (read) or writes (write) an address in the range and the optional condition is true. " +
-				"Addresses can be in a CPU address space (e.g. SnesMemory, which matches all mirrors the CPU uses) or a physical memory type " +
-				"(e.g. SnesPrgRom offset, SnesWorkRam offset: matches that exact memory wherever it's mapped). Use run_until to run until it's hit. " +
+				"Addresses can be given in a CPU address space (e.g. SnesMemory $4218) or a physical memory type (e.g. SnesPrgRom/SnesWorkRam offset). " +
+				"By default, a CPU address that maps to physical memory or an I/O register is stored as that physical location (e.g. SnesRegister $4218, SnesWorkRam $0010), " +
+				"so the breakpoint matches every mirror (e.g. $00:4218 and $81:4218); the result shows the stored memory type and address. " +
+				"Use exact_cpu_address=true to only match that exact CPU address. Use run_until to run until it's hit. " +
 				"Condition syntax is Mesen's expression syntax, e.g. \"a == $10\", \"x > 3 && [$7E0010] == 0\", \"value == $80\" (value read/written), \"address == $2118\".",
 				McpSchema.Create()
 					.Address("address", "Start address.", true)
@@ -43,6 +45,7 @@ namespace Mesen.Mcp.Tools
 					.String("memory_type", "Memory type of the address (default: the CPU's address space, e.g. SnesMemory).")
 					.String("cpu", "CPU the breakpoint applies to (default: main CPU; e.g. Spc for SPC700 breakpoints, or use memory_type SpcMemory).")
 					.String("condition", "Optional condition.")
+					.Boolean("exact_cpu_address", "Only match accesses through this exact CPU address, not its mirrors (default false).")
 					.Boolean("enabled", "Enabled (default true).")
 					.Boolean("mark_event", "Only mark the event in the event viewer instead of breaking (default false).")
 					.Build(),
@@ -77,7 +80,7 @@ namespace Mesen.Mcp.Tools
 		private static async Task<JsonObject> AddBreakpoint(McpArgs args, CancellationToken ct)
 		{
 			CpuType cpu = McpHelpers.ResolveCpu(args);
-			Breakpoint bp = CreateBreakpoint(args, cpu, "address", "end_address", "type", "memory_type", "condition", "exec");
+			Breakpoint bp = CreateBreakpoint(args, cpu, "address", "end_address", "type", "memory_type", "condition", "exact_cpu_address", "exec");
 			bp.Enabled = args.GetBool("enabled", true);
 			bp.MarkEvent = args.GetBool("mark_event", false);
 
@@ -121,7 +124,7 @@ namespace Mesen.Mcp.Tools
 			return _ids.GetValue(bp, _ => new StrongBox<int>(Interlocked.Increment(ref _lastId))).Value;
 		}
 
-		public static Breakpoint CreateBreakpoint(McpArgs args, CpuType cpu, string addressArg, string endAddressArg, string typeArg, string memTypeArg, string conditionArg, string defaultType)
+		public static Breakpoint CreateBreakpoint(McpArgs args, CpuType cpu, string addressArg, string endAddressArg, string typeArg, string memTypeArg, string conditionArg, string exactArg, string defaultType)
 		{
 			MemoryType memType = McpHelpers.ResolveMemoryType(args, memTypeArg, cpu.ToMemoryType());
 			if(memType.IsRelativeMemory() && memType != cpu.ToMemoryType()) {
@@ -162,6 +165,19 @@ namespace Mesen.Mcp.Tools
 				DebugApi.EvaluateExpression(condition, cpu, out EvalResultType resultType, false);
 				if(resultType == EvalResultType.Invalid) {
 					throw new McpToolException($"Invalid breakpoint condition: {condition}. Use Mesen's expression syntax, e.g. \"a == $10\", \"[$7E0010] > 3\", \"x & $80\".");
+				}
+			}
+
+			//A CPU address only matches accesses through that exact address (e.g. $00:4218, but not the $81:4218 mirror).
+			//Unless an exact CPU address is requested, use the underlying physical location so that every mirror matches.
+			if(memType.IsRelativeMemory() && !args.GetBool(exactArg, false)) {
+				AddressInfo absStart = DebugApi.GetAbsoluteAddress(new AddressInfo() { Address = (int)start, Type = memType });
+				AddressInfo absEnd = DebugApi.GetAbsoluteAddress(new AddressInfo() { Address = (int)end, Type = memType });
+				bool contiguous = absStart.Address >= 0 && absEnd.Type == absStart.Type && absEnd.Address - absStart.Address == end - start;
+				if(contiguous && absStart.Type.SupportsBreakpoints() && (!exec || absStart.Type.SupportsExecBreakpoints())) {
+					memType = absStart.Type;
+					start = (UInt32)absStart.Address;
+					end = (UInt32)absEnd.Address;
 				}
 			}
 

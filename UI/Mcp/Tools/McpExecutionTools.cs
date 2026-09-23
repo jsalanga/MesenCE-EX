@@ -84,6 +84,7 @@ namespace Mesen.Mcp.Tools
 					.String("break_type", "Temporary breakpoint type: exec (default), read, write, or rw.", false, new[] { "exec", "read", "write", "rw" })
 					.String("break_memory_type", "Memory type of break_address (default: the CPU's address space, e.g. SnesMemory).")
 					.String("break_condition", "Optional condition for the temporary breakpoint, in Mesen's expression syntax (e.g. \"a == $10\").")
+					.Boolean("break_exact_cpu_address", "Only match the exact CPU address, not its mirrors (default false: like add_breakpoint, the physical location is used so all mirrors match).")
 					.String("cpu", "CPU for the temporary breakpoint (default: main CPU).")
 					.Build(),
 				RunUntil
@@ -222,7 +223,7 @@ namespace Mesen.Mcp.Tools
 
 			Breakpoint? tempBreakpoint = null;
 			if(args.Has("break_address")) {
-				tempBreakpoint = McpBreakpointTools.CreateBreakpoint(args, cpu, "break_address", "break_end_address", "break_type", "break_memory_type", "break_condition", "exec");
+				tempBreakpoint = McpBreakpointTools.CreateBreakpoint(args, cpu, "break_address", "break_end_address", "break_type", "break_memory_type", "break_condition", "break_exact_cpu_address", "exec");
 			} else if(args.Has("break_end_address") || args.Has("break_type") || args.Has("break_memory_type") || args.Has("break_condition")) {
 				throw new McpToolException("break_address is required to add a temporary breakpoint.");
 			}

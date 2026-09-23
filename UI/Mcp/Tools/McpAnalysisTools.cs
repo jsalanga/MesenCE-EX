@@ -29,10 +29,10 @@ namespace Mesen.Mcp.Tools
 			registry.Add(new McpTool(
 				"disassemble",
 				$"Disassembles code the way Mesen's debugger shows it (max {MaxDisassemblyRows} instructions). Each row has the CPU address, " +
-				"the absolute location (e.g. SnesPrgRom offset), byte code, instruction text with labels substituted, effective address and value " +
+				"the absolute location (e.g. SnesPrgRom offset), byte code, instruction text with labels substituted, effective address (plus the value on the current instruction) " +
 				"(computed with the CPU's current register state, so only reliable at the current PC), label, comment, and kind: " +
 				"code (executed/verified by the code/data logger), data (verified data), or unknown (not yet executed; disassembled speculatively, " +
-				"for 65816 using the currently known M/X flags). Returns next_address to continue. Defaults to the current PC.",
+				"for 65816 using the currently known M/X flags, so REP/SEP changes aren't followed: run or step through the code for an exact listing). Returns next_address to continue. Defaults to the current PC.",
 				McpSchema.Create()
 					.String("cpu", "CPU (default: main CPU).")
 					.Address("address", "Start address in the CPU's address space (default: current PC). If memory_type is a physical memory type (e.g. SnesPrgRom), this is an offset in that memory and is converted to the CPU address where it's currently mapped.")
@@ -215,7 +215,8 @@ namespace Mesen.Mcp.Tools
 
 				string ea = line.GetEffectiveAddressString(addrFormat, out _);
 				if(ea.Length > 0) {
-					row["effective_address"] = ea + line.GetValueString();
+					//The value is read from memory now, so it is only meaningful for the instruction at the PC
+					row["effective_address"] = ea + (line.Address == pc ? line.GetValueString() : "");
 				}
 
 				if(pendingLabel != null) {

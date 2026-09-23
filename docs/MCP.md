@@ -226,7 +226,7 @@ Returns the most recently executed instructions from the trace logger in chronol
 
 #### `disassemble`
 
-Disassembles code the way Mesen's debugger shows it (max 200 instructions). Each row has the CPU address, the absolute location (e.g. SnesPrgRom offset), byte code, instruction text with labels substituted, effective address and value (computed with the CPU's current register state, so only reliable at the current PC), label, comment, and kind: code (executed/verified by the code/data logger), data (verified data), or unknown (not yet executed; disassembled speculatively, for 65816 using the currently known M/X flags). Returns next_address to continue. Defaults to the current PC.
+Disassembles code the way Mesen's debugger shows it (max 200 instructions). Each row has the CPU address, the absolute location (e.g. SnesPrgRom offset), byte code, instruction text with labels substituted, effective address (plus the value on the current instruction) (computed with the CPU's current register state, so only reliable at the current PC), label, comment, and kind: code (executed/verified by the code/data logger), data (verified data), or unknown (not yet executed; disassembled speculatively, for 65816 using the currently known M/X flags, so REP/SEP changes aren't followed: run or step through the code for an exact listing). Returns next_address to continue. Defaults to the current PC.
 
 | Argument | Type | Description |
 |---|---|---|
@@ -308,6 +308,7 @@ The main exploration primitive: resumes execution and waits until execution stop
 | `break_type` | string: `exec`, `read`, `write`, `rw` | Temporary breakpoint type: exec (default), read, write, or rw. |
 | `break_memory_type` | string | Memory type of break_address (default: the CPU's address space, e.g. SnesMemory). |
 | `break_condition` | string | Optional condition for the temporary breakpoint, in Mesen's expression syntax (e.g. "a == $10"). |
+| `break_exact_cpu_address` | boolean | Only match the exact CPU address, not its mirrors (default false: like add_breakpoint, the physical location is used so all mirrors match). |
 | `cpu` | string | CPU for the temporary breakpoint (default: main CPU). |
 
 #### `set_input`
@@ -389,7 +390,7 @@ Lists the debugger's breakpoints (the same list as the debugger's Breakpoints pa
 
 #### `add_breakpoint`
 
-Adds a breakpoint, exactly like the debugger's breakpoint editor; it is saved in Mesen's workspace and shown in the debugger. Execution stops when the CPU executes (exec), reads (read) or writes (write) an address in the range and the optional condition is true. Addresses can be in a CPU address space (e.g. SnesMemory, which matches all mirrors the CPU uses) or a physical memory type (e.g. SnesPrgRom offset, SnesWorkRam offset: matches that exact memory wherever it's mapped). Use run_until to run until it's hit. Condition syntax is Mesen's expression syntax, e.g. "a == $10", "x > 3 && [$7E0010] == 0", "value == $80" (value read/written), "address == $2118".
+Adds a breakpoint, exactly like the debugger's breakpoint editor; it is saved in Mesen's workspace and shown in the debugger. Execution stops when the CPU executes (exec), reads (read) or writes (write) an address in the range and the optional condition is true. Addresses can be given in a CPU address space (e.g. SnesMemory $4218) or a physical memory type (e.g. SnesPrgRom/SnesWorkRam offset). By default, a CPU address that maps to physical memory or an I/O register is stored as that physical location (e.g. SnesRegister $4218, SnesWorkRam $0010), so the breakpoint matches every mirror (e.g. $00:4218 and $81:4218); the result shows the stored memory type and address. Use exact_cpu_address=true to only match that exact CPU address. Use run_until to run until it's hit. Condition syntax is Mesen's expression syntax, e.g. "a == $10", "x > 3 && [$7E0010] == 0", "value == $80" (value read/written), "address == $2118".
 
 | Argument | Type | Description |
 |---|---|---|
@@ -399,6 +400,7 @@ Adds a breakpoint, exactly like the debugger's breakpoint editor; it is saved in
 | `memory_type` | string | Memory type of the address (default: the CPU's address space, e.g. SnesMemory). |
 | `cpu` | string | CPU the breakpoint applies to (default: main CPU; e.g. Spc for SPC700 breakpoints, or use memory_type SpcMemory). |
 | `condition` | string | Optional condition. |
+| `exact_cpu_address` | boolean | Only match accesses through this exact CPU address, not its mirrors (default false). |
 | `enabled` | boolean | Enabled (default true). |
 | `mark_event` | boolean | Only mark the event in the event viewer instead of breaking (default false). |
 
@@ -468,5 +470,3 @@ Loads a save state from a .mss file (absolute path) or from a save slot (1-10). 
 |---|---|---|
 | `path` | string | Absolute path of the .mss file. |
 | `slot` | integer | Save slot (1-10), alternative to path. |
-
-
