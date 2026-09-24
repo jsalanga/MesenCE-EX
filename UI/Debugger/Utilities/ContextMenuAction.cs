@@ -561,6 +561,9 @@ namespace Mesen.Debugger.Utilities
 		[IconFile("Edit")]
 		OpenNesHeaderEditor,
 
+		[IconFile("Network")]
+		OpenMcpServer,
+
 		[IconFile("Settings")]
 		OpenDebugSettings,
 

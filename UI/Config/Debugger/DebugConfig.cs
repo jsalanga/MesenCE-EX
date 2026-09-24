@@ -1,5 +1,6 @@
 ﻿using Mesen.Debugger;
 using Mesen.Interop;
+using Mesen.Mcp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -40,7 +41,13 @@ namespace Mesen.Config
 
 		public void ApplyConfig()
 		{
-			ConfigApi.SetDebugConfig(new InteropDebugConfig() {
+			ConfigApi.SetDebugConfig(ToInterop());
+			McpServer.Instance.ApplyConfig();
+		}
+
+		public InteropDebugConfig ToInterop()
+		{
+			return new InteropDebugConfig() {
 				BreakOnUninitRead = Debugger.BreakOnUninitRead,
 				ShowJumpLabels = Debugger.ShowJumpLabels,
 				DrawPartialFrame = Debugger.DrawPartialFrame,
@@ -104,7 +111,7 @@ namespace Mesen.Config
 				ScriptAllowIoOsAccess = ScriptWindow.AllowIoOsAccess,
 				ScriptAllowNetworkAccess = ScriptWindow.AllowNetworkAccess,
 				ScriptTimeout = ScriptWindow.ScriptTimeout
-			});
+			};
 		}
 	}
 

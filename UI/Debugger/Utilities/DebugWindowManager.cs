@@ -15,6 +15,7 @@ namespace Mesen.Debugger.Utilities
 	public static class DebugWindowManager
 	{
 		private static int _debugWindowCounter = 0;
+		private static int _externalSessionCount = 0;
 		private static ConcurrentDictionary<Window, bool> _openedWindows = new();
 		private static ReaderWriterLockSlim _windowNotifLock = new();
 		private static bool _loadingGame = false;
@@ -72,11 +73,35 @@ namespace Mesen.Debugger.Utilities
 			return null;
 		}
 
+		/// <summary>
+		/// Keeps the debugger active without a debug window (e.g. for the MCP server), exactly as if a debug window was opened:
+		/// the workspace (labels, breakpoints) is loaded, and the debugger is not released when the last debug window is closed.
+		/// Must be called on the UI thread.
+		/// </summary>
+		public static void AcquireDebugSession()
+		{
+			Interlocked.Increment(ref _externalSessionCount);
+			if(Interlocked.Increment(ref _debugWindowCounter) == 1) {
+				DebugWorkspaceManager.Load();
+			}
+		}
+
+		/// <summary>Releases a session acquired with AcquireDebugSession. Must be called on the UI thread.</summary>
+		public static void ReleaseDebugSession()
+		{
+			Interlocked.Decrement(ref _externalSessionCount);
+			DecrementDebugWindowCounter();
+		}
+
 		private static void CloseDebugWindow(Window wnd)
 		{
 			//Remove window from list first, to ensure no more notifications are sent to it
 			_openedWindows.TryRemove(wnd, out _);
+			DecrementDebugWindowCounter();
+		}
 
+		private static void DecrementDebugWindowCounter()
+		{
 			if(Interlocked.Decrement(ref _debugWindowCounter) == 0) {
 				//Closed the last debug window, save the workspace and turn off the debugger
 				//Run any jobs pending on the UI thread, to ensure the debugger
@@ -109,7 +134,7 @@ namespace Mesen.Debugger.Utilities
 
 		public static void ProcessNotification(NotificationEventArgs e)
 		{
-			if(_openedWindows.Count == 0) {
+			if(_openedWindows.Count == 0 && _externalSessionCount == 0) {
 				return;
 			}
 

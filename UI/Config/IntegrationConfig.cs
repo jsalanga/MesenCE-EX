@@ -29,6 +29,10 @@ namespace Mesen.Config
 
 		[ObservableProperty] public partial int TabSize { get; set; } = 4;
 
+		[ObservableProperty] public partial bool McpServerEnabled { get; set; } = false;
+		[ObservableProperty] public partial int McpServerPort { get; set; } = 8765;
+		[ObservableProperty] public partial bool McpAllowWriteAccess { get; set; } = false;
+
 		public bool IsMemoryTypeImportEnabled(MemoryType memType)
 		{
 			switch(memType) {

@@ -1230,6 +1230,19 @@
 			<Control ID="btnClose">Close</Control>
 		</Form>
 
+		<Form ID="McpServerWindow">
+			<Control ID="wndTitle">MCP Server</Control>
+			<Control ID="lblStatus">Status:</Control>
+			<Control ID="lblUrl">URL:</Control>
+			<Control ID="lblClaudeCode">Claude Code:</Control>
+			<Control ID="lblWriteAccess">Write access:</Control>
+			<Control ID="lblActivity">Activity:</Control>
+			<Control ID="lblSecurityHint">The MCP server lets AI agents (e.g. Claude Code) use the debugger. It only accepts connections from this computer, but any program running on this computer can connect to it while it's enabled.</Control>
+			<Control ID="btnCopy">Copy</Control>
+			<Control ID="btnSettings">Settings...</Control>
+			<Control ID="btnClose">Close</Control>
+		</Form>
+
 		<Form ID="HistoryViewerWindow">
 			<Control ID="wndTitle">History Viewer</Control>
 			<Control ID="lblVolume">Volume</Control>
@@ -1620,6 +1633,12 @@
 			<Control ID="lblSourceView">Source view</Control>
 			<Control ID="lblTabSize">Tab size: </Control>
 
+			<Control ID="lblMcpServer">MCP server (AI agent access)</Control>
+			<Control ID="chkMcpServerEnabled">Enable the MCP server (lets AI agents use the debugger)</Control>
+			<Control ID="lblMcpServerPort">Port: </Control>
+			<Control ID="chkMcpAllowWriteAccess">Allow write access (memory/register writes, reset, loading ROMs and save states)</Control>
+			<Control ID="lblMcpServerHint">The server only listens on this computer (127.0.0.1), but any program running on this computer can connect to it while it's enabled. Use Debug > MCP Server to see the server's status and URL.</Control>
+
 			<Control ID="tabShortcuts">Shortcuts</Control>
 			<Control ID="tabShared">Shared</Control>
 			<Control ID="tabMemoryTools">Memory Viewer</Control>
@@ -1887,6 +1906,13 @@ E
 		<Message ID="AddressOutOfRange">The address is out of range.</Message>
 		<Message ID="AddressHasOtherLabel">Another label exists for this address: {0}</Message>
 
+		<Message ID="McpServerListening">Listening</Message>
+		<Message ID="McpServerStarting">Starting...</Message>
+		<Message ID="McpServerDisabled">Disabled (enable it in the settings)</Message>
+		<Message ID="McpServerError">Error: {0}</Message>
+		<Message ID="McpWriteAccessEnabled">Enabled (agents can write memory, reset, load ROMs and save states)</Message>
+		<Message ID="McpWriteAccessDisabled">Disabled (read-only tools, execution control, labels and breakpoints)</Message>
+		<Message ID="McpServerActivity">{0} client(s) in the last 5 minutes, {1} request(s), last request: {2}</Message>
 		<Message ID="RecentShaders">Recent shaders </Message>
 	</Messages>
 	<Enums>
@@ -3617,6 +3643,7 @@ E
 			<Value ID="OpenTileViewer">Tile Viewer</Value>
 			<Value ID="OpenSpriteViewer">Sprite Viewer</Value>
 			<Value ID="OpenPaletteViewer">Palette Viewer</Value>
+			<Value ID="OpenMcpServer">MCP Server</Value>
 			<Value ID="OpenDebugSettings">Settings</Value>
 
 			<Value ID="Tools">Tools</Value>

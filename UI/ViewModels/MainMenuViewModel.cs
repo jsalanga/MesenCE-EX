@@ -9,6 +9,7 @@ using Mesen.Debugger.ViewModels;
 using Mesen.Debugger.Windows;
 using Mesen.Interop;
 using Mesen.Localization;
+using Mesen.Mcp;
 using Mesen.Utilities;
 using Mesen.Windows;
 using System;
@@ -1170,6 +1171,10 @@ namespace Mesen.ViewModels
 				},
 
 				new ContextMenuSeparator(),
+				new ContextMenuAction() {
+					ActionType = ActionType.OpenMcpServer,
+					OnClick = () => ApplicationHelper.GetOrCreateUniqueWindow(wnd, () => new McpServerWindow())
+				},
 				new ContextMenuAction() {
 					ActionType = ActionType.OpenDebugSettings,
 					Shortcut = () => ConfigManager.Config.Debug.Shortcuts.Get(DebuggerShortcut.OpenDebugSettings),
